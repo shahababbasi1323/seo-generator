@@ -235,16 +235,15 @@
                 document.getElementById('generateBtn').textContent = '⏳ Generating...';
 
                 try {
-                    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    const response = await fetch("https://agentrouter.org/v1/messages", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            "Authorization": "Bearer " + this.formData.apiKey,
-                            "HTTP-Referer": "https://seo-generator.netlify.app",
-                            "X-Title": "SEO Content Generator"
+                            "x-api-key": this.formData.apiKey,
+                            "anthropic-version": "2023-06-01"
                         },
                         body: JSON.stringify({
-                            model: "claude-3.5-sonnet",
+                            model: "claude-sonnet-4-20250514",
                             max_tokens: 16000,
                             messages: [{
                                 role: "user",
@@ -284,7 +283,10 @@ Generate complete HTML with modern styling that can be copy-pasted directly into
                         throw new Error(data.error.message || 'API Error');
                     }
 
-                    const content = data.choices[0].message.content;
+                    const content = data.content
+                        .filter(block => block.type === 'text')
+                        .map(block => block.text)
+                        .join('\n');
 
                     this.result = content;
                     this.displayResult();
