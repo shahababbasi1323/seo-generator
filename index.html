@@ -1,528 +1,348 @@
-import React, { useState, useEffect } from 'react';
-import { Loader2, Download, Copy, Check, AlertCircle, Code, Book, Zap, Shield, Target } from 'lucide-react';
-
-const SEOContentGeneratorApp = () => {
-  const [formData, setFormData] = useState({
-    serviceName: 'Air Duct Cleaning',
-    locationName: 'Pearland, TX',
-    pageTitle: '',
-    pageType: 'service',
-    apiKey: ''
-  });
-  
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState(null);
-  const [showDocs, setShowDocs] = useState(false);
-  const [savedKeys, setSavedKeys] = useState([]);
-
-  useEffect(() => {
-    // Load saved API keys from localStorage (for demo purposes only)
-    try {
-      const saved = localStorage.getItem('seo-api-keys');
-      if (saved) setSavedKeys(JSON.parse(saved));
-    } catch (e) {
-      console.log('localStorage not available');
-    }
-  }, []);
-
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const generateContent = async () => {
-    if (!formData.serviceName || !formData.locationName) {
-      setError('Please fill in Service Name and Location Name');
-      return;
-    }
-
-    if (!formData.apiKey) {
-      setError('Please enter your Anthropic API key');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setResult(null);
-
-    try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": formData.apiKey,
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 16000,
-          messages: [
-            {
-              role: "user",
-              content: `You are an expert SEO content writer specializing in local service businesses. Generate complete, ready-to-use HTML content for a service page.
-
-**INPUT DETAILS:**
-- Service: ${formData.serviceName}
-- Location: ${formData.locationName}
-- Page Title: ${formData.pageTitle || formData.serviceName + ' in ' + formData.locationName}
-- Page Type: ${formData.pageType}
-
-**CONTENT REQUIREMENTS:**
-
-Generate complete HTML with modern styling that can be copy-pasted directly into Elementor HTML widget or any page builder.
-
-**STRUCTURE:**
-
-1. **HERO SECTION (Card Style)**
-- Eye-catching headline with emotional hook
-- 2-3 paragraphs addressing pain points + solution
-- Bold primary keywords naturally
-- Include CTA button: "Get Free Estimate - Call Now!"
-- Style: Modern card with gradient background
-
-2. **WHY CHOOSE US SECTION (Icon Cards)**
-- 6 benefit cards in grid layout
-- Each card: Icon + Title + Description
-- Benefits like: Licensed & Insured, Same-Day Service, 100% Satisfaction, Local Experts, Advanced Equipment, Free Inspection
-- Bold important terms
-
-3. **OUR SERVICES SECTION (List Cards)**
-- Main service + 7-8 related services
-- Each in a styled card
-- Bold service names
-- Include: **Air Duct Cleaning**, **Dryer Vent Cleaning**, **HVAC Cleaning**, **Mold Removal**, **Duct Sanitization**, **Air Quality Testing**, **Duct Sealing**, **Filter Replacement**
-- CTA: "Book Service Online - Available 24/7"
-
-4. **LOCAL PROBLEMS SECTION (Alert-Style Cards)**
-- 5-6 problems specific to ${formData.locationName}
-- Style as attention-grabbing cards
-- Bold LSI keywords like: **humidity**, **air quality**, **allergens**, **dust**, **energy costs**, **HVAC efficiency**
-- Mention local climate, local construction, seasonal issues
-
-5. **OUR PROCESS SECTION (Numbered Steps)**
-- 5-6 step process in timeline/card format
-- Clear, simple language
-- Bold action words
-- Include: Inspection, Assessment, Deep Cleaning, Sanitization, Testing, Follow-up
-
-6. **BENEFITS SECTION (Grid Cards)**
-- 6 major benefits in styled cards
-- Each with icon placeholder [ICON]
-- Bold benefit keywords: **Improved Air Quality**, **Lower Energy Bills**, **Extended HVAC Life**, **Allergy Relief**, **Cleaner Home**, **Better Airflow**
-- Include statistics where relevant
-
-7. **SERVICE AREA SECTION**
-- Mention ${formData.locationName} neighborhoods
-- Nearby cities/areas served
-- Bold location names
-- Local landmarks or areas
-
-8. **FAQ SECTION (Accordion-Style)**
-- 10 FAQs with Schema markup
-- Questions like:
-  * How often should services be performed in ${formData.locationName}?
-  * What are signs I need this service?
-  * How long does it take?
-  * Do you offer same-day service in ${formData.locationName}?
-  * How much does it cost?
-  * Can this problem affect my health?
-  * Are your technicians certified?
-  * Do you offer free estimates?
-  * What's included in your service?
-  * Do you service residential and commercial?
-- Bold important terms in answers
-
-9. **MULTIPLE CTA SECTIONS** (Throughout)
-High-CTR button text variations:
-- "Get Your Free Quote Now - Call: (XXX) XXX-XXXX"
-- "Book Online - Same Day Service Available!"
-- "Schedule Free Inspection Today!"
-- "Call Now for 20% Off - Limited Time!"
-- "Emergency Service Available 24/7"
-- Style buttons with gradient, hover effects
-
-10. **SCHEMA MARKUP (at end)**
-Include complete JSON-LD for:
-- LocalBusiness Schema
-- Service Schema
-- FAQPage Schema
-- AggregateRating Schema (4.9/5, 287 reviews)
-- OpeningHours (24/7)
-
-**STYLING REQUIREMENTS:**
-
-Use inline CSS with:
-- Modern card designs with shadows
-- Gradient backgrounds for CTAs
-- Responsive grid layouts (flexbox)
-- Bold LSI keywords throughout
-- Clean typography
-- Plenty of white space
-- Mobile-friendly
-- Professional color scheme (blues, whites, grays)
-
-**WRITING STYLE:**
-- Grade 6-7 reading level
-- Active voice
-- Conversational but professional
-- Emotionally engaging
-- Focus on benefits not features
-- Local relevance throughout
-- Natural keyword usage (not stuffed)
-
-**OUTPUT:**
-Return ONLY the HTML content (body content). No explanations. Ready to copy-paste into Elementor or any HTML widget.
-
-Make it conversion-focused with strategic CTA placement every 2-3 sections.`
-            }
-          ]
-        })
-      });
-
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error.message || 'API Error');
-      }
-
-      const content = data.content
-        .filter(block => block.type === 'text')
-        .map(block => block.text)
-        .join('\n');
-
-      setResult(content);
-    } catch (err) {
-      setError(err.message || 'Failed to generate content. Please check your API key and try again.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(result);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const downloadHTML = () => {
-    const blob = new Blob([result], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${formData.serviceName}-${formData.locationName}.html`.replace(/\s+/g, '-').toLowerCase();
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      {/* Navigation */}
-      <nav className="bg-black/40 backdrop-blur-md border-b border-blue-500/20">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-white">SEO Content Generator</h1>
-          </div>
-          <div className="text-sm text-gray-300">Powered by Claude AI</div>
-        </div>
-      </nav>
-
-      <div className="max-w-7xl mx-auto p-4">
-        {/* Hero Info Card */}
-        <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-400/20 rounded-xl p-6 mb-6 backdrop-blur-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Create SEO-Optimized Content in Seconds</h2>
-              <p className="text-gray-300 mb-3">Generate Elementor-ready HTML with cards, CTAs, keywords & complete schemas using AI</p>
-              <div className="flex gap-4 text-sm text-gray-300">
-                <div className="flex items-center gap-1"><Check className="w-4 h-4 text-green-400" /> AI-Powered</div>
-                <div className="flex items-center gap-1"><Target className="w-4 h-4 text-blue-400" /> Conversion-Focused</div>
-                <div className="flex items-center gap-1"><Shield className="w-4 h-4 text-purple-400" /> SEO Optimized</div>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowDocs(!showDocs)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
-            >
-              <Book className="w-4 h-4" />
-              {showDocs ? 'Hide' : 'Show'} Deploy Guide
-            </button>
-          </div>
-        </div>
-
-        {/* Deployment Guide */}
-        {showDocs && (
-          <div className="bg-slate-800/50 border border-blue-400/20 rounded-xl p-6 mb-6 backdrop-blur-sm">
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Code className="w-5 h-5" />
-              Netlify Deployment Guide
-            </h3>
-            
-            <div className="space-y-4 text-sm text-gray-300">
-              <div className="bg-slate-900/50 p-4 rounded-lg border border-green-500/30">
-                <h4 className="text-green-400 font-bold mb-3">✅ Quick Deploy (5 minutes)</h4>
-                <ol className="space-y-2 list-decimal list-inside text-gray-300">
-                  <li>Go to <a href="https://github.com/new" target="_blank" className="text-blue-400 hover:underline">github.com/new</a></li>
-                  <li>Create repo: <code className="bg-black px-2 py-1 rounded text-gray-200">seo-generator</code></li>
-                  <li>Create file: <code className="bg-black px-2 py-1 rounded text-gray-200">index.html</code></li>
-                  <li>Paste the full HTML below into it</li>
-                  <li>Go to <a href="https://netlify.com" target="_blank" className="text-blue-400 hover:underline">netlify.com</a> → Connect GitHub</li>
-                  <li>Select repo → Deploy (automatically live!)</li>
-                </ol>
-              </div>
-
-              <div className="bg-slate-900/50 p-4 rounded-lg border border-blue-500/30">
-                <h4 className="text-blue-400 font-bold mb-3">🚀 Full HTML File (Copy Below)</h4>
-                <div className="bg-black/80 p-3 rounded text-xs text-gray-300 max-h-64 overflow-y-auto font-mono">
-                  <pre>{`<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AI-Powered SEO Content Generator">
+    <meta name="description" content="AI-Powered SEO Content Generator for Local Businesses">
     <meta name="theme-color" content="#0f172a">
     <title>SEO Content Generator - Powered by Claude AI</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
+    <style>
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
 </head>
-<body class="bg-slate-950 text-white">
-    <div id="root"></div>
-    <!-- PASTE THE REACT COMPONENT CODE HERE -->
+<body class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
+    <div id="app"></div>
+
+    <script>
+        // SEO Content Generator App
+        class SEOGenerator {
+            constructor() {
+                this.formData = {
+                    serviceName: 'Air Duct Cleaning',
+                    locationName: 'Pearland, TX',
+                    pageTitle: '',
+                    pageType: 'service',
+                    apiKey: ''
+                };
+                this.loading = false;
+                this.result = null;
+                this.error = null;
+                this.showDocs = false;
+                this.copied = false;
+                this.init();
+            }
+
+            init() {
+                this.render();
+                this.attachEvents();
+            }
+
+            render() {
+                const app = document.getElementById('app');
+                app.innerHTML = `
+                    <!-- Navigation -->
+                    <nav class="bg-black/40 backdrop-blur-md border-b border-blue-500/20">
+                        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center font-bold">⚡</div>
+                                <h1 class="text-xl font-bold">SEO Content Generator</h1>
+                            </div>
+                            <div class="text-sm text-gray-300">Powered by Claude AI</div>
+                        </div>
+                    </nav>
+
+                    <div class="max-w-7xl mx-auto p-4">
+                        <!-- Hero Card -->
+                        <div class="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-400/20 rounded-xl p-6 mb-6 backdrop-blur-sm">
+                            <div class="flex flex-col md:flex-row items-start justify-between gap-4">
+                                <div>
+                                    <h2 class="text-2xl font-bold mb-2">Create SEO-Optimized Content in Seconds</h2>
+                                    <p class="text-gray-300 mb-3">Generate Elementor-ready HTML with cards, CTAs, keywords & complete schemas using AI</p>
+                                    <div class="flex gap-4 text-sm text-gray-300 flex-wrap">
+                                        <div class="flex items-center gap-1">✅ AI-Powered</div>
+                                        <div class="flex items-center gap-1">🎯 Conversion-Focused</div>
+                                        <div class="flex items-center gap-1">🔒 SEO Optimized</div>
+                                    </div>
+                                </div>
+                                <button id="toggleDocs" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg whitespace-nowrap">
+                                    📖 Show Deploy Guide
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Docs Section -->
+                        <div id="docsSection" class="hidden bg-slate-800/50 border border-blue-400/20 rounded-xl p-6 mb-6 backdrop-blur-sm">
+                            <h3 class="text-xl font-bold mb-4">⚡ Netlify Deployment</h3>
+                            <div class="space-y-4 text-sm text-gray-300">
+                                <div class="bg-slate-900/50 p-4 rounded-lg border border-green-500/30">
+                                    <h4 class="text-green-400 font-bold mb-3">✅ Quick Deploy (5 minutes)</h4>
+                                    <ol class="space-y-2 list-decimal list-inside">
+                                        <li>Go to <a href="https://github.com/new" target="_blank" class="text-blue-400 hover:underline">github.com/new</a></li>
+                                        <li>Create repo: <code class="bg-black px-2 py-1 rounded">seo-generator</code></li>
+                                        <li>Create file: <code class="bg-black px-2 py-1 rounded">index.html</code></li>
+                                        <li>Paste this entire page HTML into it</li>
+                                        <li>Go to <a href="https://netlify.com" target="_blank" class="text-blue-400 hover:underline">netlify.com</a> → Connect GitHub</li>
+                                        <li>Select repo → Deploy (live instantly!)</li>
+                                    </ol>
+                                </div>
+                                <div class="bg-slate-900/50 p-4 rounded-lg border border-blue-500/30">
+                                    <h4 class="text-blue-400 font-bold mb-2">🌐 After Deployment</h4>
+                                    <ul class="space-y-1 list-disc list-inside">
+                                        <li>Your site: <code class="bg-black px-1">your-repo-name.netlify.app</code></li>
+                                        <li>Custom domain in Site Settings</li>
+                                        <li>Auto-updates when you push to GitHub</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-yellow-900/30 p-4 rounded-lg border border-yellow-600/50">
+                                    <h4 class="text-yellow-300 font-bold mb-2">⚠️ Security Note</h4>
+                                    <p class="text-sm">This stores API keys in browser (safe for personal use). For production, use Netlify Functions with backend API.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Main Content -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- Form -->
+                            <div class="lg:col-span-1">
+                                <div class="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6 sticky top-4">
+                                    <h2 class="text-lg font-bold mb-4">Generate Content</h2>
+                                    
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-300 mb-2">Anthropic API Key *</label>
+                                            <input type="password" id="apiKey" placeholder="sk-ant-..." class="w-full px-4 py-2 bg-slate-700/50 border border-blue-400/30 rounded-lg focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500" value="${this.formData.apiKey}">
+                                            <p class="text-xs text-gray-400 mt-1">Get from <a href="https://console.anthropic.com" target="_blank" class="text-blue-400 hover:underline">console.anthropic.com</a></p>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-300 mb-2">Service Name *</label>
+                                            <input type="text" id="serviceName" placeholder="e.g., Air Duct Cleaning" class="w-full px-4 py-2 bg-slate-700/50 border border-blue-400/30 rounded-lg text-white placeholder-gray-500" value="${this.formData.serviceName}">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-300 mb-2">Location *</label>
+                                            <input type="text" id="locationName" placeholder="e.g., Pearland, TX" class="w-full px-4 py-2 bg-slate-700/50 border border-blue-400/30 rounded-lg text-white placeholder-gray-500" value="${this.formData.locationName}">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-300 mb-2">Page Title (Optional)</label>
+                                            <input type="text" id="pageTitle" placeholder="Auto-generated if empty" class="w-full px-4 py-2 bg-slate-700/50 border border-blue-400/30 rounded-lg text-white placeholder-gray-500">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-300 mb-2">Page Type</label>
+                                            <select id="pageType" class="w-full px-4 py-2 bg-slate-700/50 border border-blue-400/30 rounded-lg text-white">
+                                                <option value="service">Service Page</option>
+                                                <option value="location">Location Page</option>
+                                                <option value="blog">Blog Post</option>
+                                            </select>
+                                        </div>
+
+                                        <div id="errorBox" class="hidden bg-red-900/30 border border-red-500/50 rounded-lg p-3"></div>
+
+                                        <button id="generateBtn" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-all">
+                                            ⚡ Generate HTML
+                                        </button>
+
+                                        <div class="mt-6 pt-6 border-t border-blue-400/20">
+                                            <h3 class="text-sm font-bold mb-3">Features:</h3>
+                                            <ul class="text-xs text-gray-300 space-y-2">
+                                                <li>✅ Card-style sections</li>
+                                                <li>✅ 8+ CTA buttons</li>
+                                                <li>✅ Bolded keywords</li>
+                                                <li>✅ 10 FAQs + schema</li>
+                                                <li>✅ JSON-LD markup</li>
+                                                <li>✅ Mobile responsive</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Output -->
+                            <div class="lg:col-span-2">
+                                <div class="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h2 class="text-lg font-bold">Generated HTML</h2>
+                                        <div id="outputButtons" class="hidden flex gap-2">
+                                            <button id="copyBtn" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm">📋 Copy</button>
+                                            <button id="downloadBtn" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm">⬇️ Download</button>
+                                        </div>
+                                    </div>
+
+                                    <div id="outputContent" class="text-center py-20">
+                                        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4 text-2xl">📝</div>
+                                        <h3 class="text-lg font-bold mb-2">Ready to Generate</h3>
+                                        <p class="text-gray-400">Fill in the details and generate SEO-optimized content</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            attachEvents() {
+                document.getElementById('toggleDocs').addEventListener('click', () => {
+                    const docs = document.getElementById('docsSection');
+                    docs.classList.toggle('hidden');
+                    document.getElementById('toggleDocs').textContent = docs.classList.contains('hidden') ? '📖 Show Deploy Guide' : '📖 Hide Deploy Guide';
+                });
+
+                document.getElementById('generateBtn').addEventListener('click', () => this.generateContent());
+                document.getElementById('copyBtn')?.addEventListener('click', () => this.copyToClipboard());
+                document.getElementById('downloadBtn')?.addEventListener('click', () => this.downloadHTML());
+
+                ['apiKey', 'serviceName', 'locationName', 'pageTitle', 'pageType'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.addEventListener('change', (e) => {
+                        this.formData[id] = e.target.value;
+                    });
+                });
+            }
+
+            async generateContent() {
+                this.formData.apiKey = document.getElementById('apiKey').value;
+                this.formData.serviceName = document.getElementById('serviceName').value;
+                this.formData.locationName = document.getElementById('locationName').value;
+                this.formData.pageTitle = document.getElementById('pageTitle').value;
+                this.formData.pageType = document.getElementById('pageType').value;
+
+                if (!this.formData.serviceName || !this.formData.locationName) {
+                    this.showError('Please fill in Service Name and Location Name');
+                    return;
+                }
+
+                if (!this.formData.apiKey) {
+                    this.showError('Please enter your Anthropic API key');
+                    return;
+                }
+
+                this.loading = true;
+                document.getElementById('generateBtn').disabled = true;
+                document.getElementById('generateBtn').textContent = '⏳ Generating...';
+
+                try {
+                    const response = await fetch("https://api.anthropic.com/v1/messages", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-api-key": this.formData.apiKey,
+                            "anthropic-version": "2023-06-01"
+                        },
+                        body: JSON.stringify({
+                            model: "claude-sonnet-4-20250514",
+                            max_tokens: 16000,
+                            messages: [{
+                                role: "user",
+                                content: `You are an expert SEO content writer specializing in local service businesses. Generate complete, ready-to-use HTML content for a service page.
+
+**INPUT DETAILS:**
+- Service: ${this.formData.serviceName}
+- Location: ${this.formData.locationName}
+- Page Title: ${this.formData.pageTitle || this.formData.serviceName + ' in ' + this.formData.locationName}
+- Page Type: ${this.formData.pageType}
+
+**CONTENT REQUIREMENTS:**
+
+Generate complete HTML with modern styling that can be copy-pasted directly into Elementor HTML widget or any page builder. Include:
+
+1. **HERO SECTION** - Eye-catching headline, 2-3 paragraphs, CTA button
+2. **WHY CHOOSE US** - 6 benefit cards with icons
+3. **OUR SERVICES** - Main service + 7-8 related services in cards
+4. **LOCAL PROBLEMS** - 5-6 problems specific to ${this.formData.locationName}
+5. **OUR PROCESS** - 5-6 step process in timeline format
+6. **BENEFITS** - 6 major benefits with statistics
+7. **SERVICE AREA** - Mention ${this.formData.locationName} neighborhoods and nearby areas
+8. **FAQ SECTION** - 10 FAQs with Schema markup
+9. **MULTIPLE CTA SECTIONS** - Throughout with high-CTR button text
+10. **SCHEMA MARKUP** - Complete JSON-LD for LocalBusiness, Service, FAQPage, AggregateRating
+
+**STYLING:** Modern card designs, gradients, responsive grid layouts, mobile-friendly, professional color scheme (blues, whites, grays)
+
+**OUTPUT:** Return ONLY the HTML content (body content). No explanations. Ready to copy-paste.`
+                            }]
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error.message || 'API Error');
+                    }
+
+                    const content = data.content
+                        .filter(block => block.type === 'text')
+                        .map(block => block.text)
+                        .join('\n');
+
+                    this.result = content;
+                    this.displayResult();
+                } catch (err) {
+                    this.showError(err.message || 'Failed to generate content. Check your API key.');
+                } finally {
+                    this.loading = false;
+                    document.getElementById('generateBtn').disabled = false;
+                    document.getElementById('generateBtn').textContent = '⚡ Generate HTML';
+                }
+            }
+
+            displayResult() {
+                const output = document.getElementById('outputContent');
+                const buttons = document.getElementById('outputButtons');
+                
+                output.innerHTML = `
+                    <div class="bg-slate-900/50 border border-blue-400/20 rounded-lg p-4 max-h-96 overflow-y-auto text-left">
+                        <pre class="text-xs text-gray-300 whitespace-pre-wrap font-mono">${this.result.substring(0, 2000)}...</pre>
+                    </div>
+                    <div class="bg-green-900/30 border border-green-500/50 rounded-lg p-4 mt-4">
+                        <h4 class="font-bold text-green-300 mb-2">✅ Success!</h4>
+                        <p class="text-sm text-green-300">Your HTML is ready. Copy or download to use in Elementor.</p>
+                    </div>
+                `;
+                buttons.classList.remove('hidden');
+            }
+
+            copyToClipboard() {
+                navigator.clipboard.writeText(this.result);
+                const btn = document.getElementById('copyBtn');
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
+            }
+
+            downloadHTML() {
+                const blob = new Blob([this.result], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${this.formData.serviceName}-${this.formData.locationName}.html`.replace(/\s+/g, '-').toLowerCase();
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            showError(message) {
+                const errorBox = document.getElementById('errorBox');
+                errorBox.innerHTML = `<p class="text-sm text-red-300">❌ ${message}</p>`;
+                errorBox.classList.remove('hidden');
+            }
+        }
+
+        // Initialize app
+        new SEOGenerator();
+    </script>
 </body>
-</html>`}</pre>
-                </div>
-              </div>
-
-              <div className="bg-slate-900/50 p-4 rounded-lg border border-purple-500/30">
-                <h4 className="text-purple-400 font-bold mb-3">🌐 After Deployment</h4>
-                <ul className="space-y-2 list-disc list-inside">
-                  <li>Your site will be live at: <code className="bg-black px-2 py-1 rounded text-gray-200">your-repo-name.netlify.app</code></li>
-                  <li>Custom domain: Go to Site Settings → Domain Management</li>
-                  <li>API keys stay in browser (add backend for production)</li>
-                  <li>Site auto-updates when you push to GitHub</li>
-                </ul>
-              </div>
-
-              <div className="bg-yellow-900/30 p-4 rounded-lg border border-yellow-600/50">
-                <h4 className="text-yellow-300 font-bold mb-2">⚠️ Security Notes</h4>
-                <ul className="space-y-1 text-sm">
-                  <li>• This tool stores API keys in browser (for demo)</li>
-                  <li>• For production: use Netlify Functions or backend API</li>
-                  <li>• Never commit API keys to GitHub</li>
-                  <li>• Use environment variables: Settings → Build & Deploy</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Input Form */}
-          <div className="lg:col-span-1">
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6 sticky top-4">
-              <h2 className="text-lg font-bold text-white mb-4">Generate Content</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Anthropic API Key *
-                  </label>
-                  <input
-                    type="password"
-                    name="apiKey"
-                    value={formData.apiKey}
-                    onChange={handleInputChange}
-                    placeholder="sk-ant-..."
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-blue-400/30 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-500"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    Get key from <a href="https://console.anthropic.com" target="_blank" className="text-blue-400 hover:underline">console.anthropic.com</a>
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Service Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="serviceName"
-                    value={formData.serviceName}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Air Duct Cleaning"
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-blue-400/30 rounded-lg focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Location *
-                  </label>
-                  <input
-                    type="text"
-                    name="locationName"
-                    value={formData.locationName}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Pearland, TX"
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-blue-400/30 rounded-lg focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Page Title (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    name="pageTitle"
-                    value={formData.pageTitle}
-                    onChange={handleInputChange}
-                    placeholder="Auto-generated if empty"
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-blue-400/30 rounded-lg focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Page Type
-                  </label>
-                  <select
-                    name="pageType"
-                    value={formData.pageType}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-blue-400/30 rounded-lg focus:ring-2 focus:ring-blue-500 text-white"
-                  >
-                    <option value="service">Service Page</option>
-                    <option value="location">Location Page</option>
-                    <option value="blog">Blog Post</option>
-                  </select>
-                </div>
-
-                {error && (
-                  <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-3 flex items-start gap-2">
-                    <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-red-300">{error}</p>
-                  </div>
-                )}
-
-                <button
-                  onClick={generateContent}
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 text-white font-bold py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-5 h-5" />
-                      Generate HTML
-                    </>
-                  )}
-                </button>
-
-                <div className="mt-6 pt-6 border-t border-blue-400/20">
-                  <h3 className="text-sm font-bold text-white mb-3">Features:</h3>
-                  <ul className="text-xs text-gray-300 space-y-2">
-                    <li>✅ Card-style sections</li>
-                    <li>✅ 8+ CTA buttons</li>
-                    <li>✅ Bolded keywords</li>
-                    <li>✅ 10 FAQs + schema</li>
-                    <li>✅ JSON-LD markup</li>
-                    <li>✅ Mobile responsive</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Output Area */}
-          <div className="lg:col-span-2">
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white">Generated HTML</h2>
-                {result && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={copyToClipboard}
-                      className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-gray-200 rounded-lg transition-all"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="w-4 h-4 text-green-400" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4" />
-                          Copy
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={downloadHTML}
-                      className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
-                    >
-                      <Download className="w-4 h-4" />
-                      Download
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {!result && !loading && (
-                <div className="text-center py-20">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Code className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Ready to Generate</h3>
-                  <p className="text-gray-400 mb-6">Fill in the details and generate SEO-optimized content</p>
-                </div>
-              )}
-
-              {loading && (
-                <div className="text-center py-20">
-                  <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
-                  <h3 className="text-lg font-bold text-white mb-2">Creating Your Content</h3>
-                  <p className="text-gray-400 mb-4">AI is generating optimized HTML...</p>
-                </div>
-              )}
-
-              {result && (
-                <div className="space-y-4">
-                  <div className="bg-slate-900/50 border border-blue-400/20 rounded-lg p-4 max-h-96 overflow-y-auto">
-                    <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono">
-                      {result.substring(0, 2000)}...
-                    </pre>
-                  </div>
-                  
-                  <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
-                    <h4 className="font-bold text-green-300 mb-2">✅ Success!</h4>
-                    <p className="text-sm text-green-300">
-                      Your HTML is ready. Copy or download to use in Elementor or any page builder.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default SEOContentGeneratorApp;
+</html>
