@@ -121,9 +121,9 @@
                                     
                                     <div class="space-y-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-300 mb-2">Anthropic API Key *</label>
-                                            <input type="password" id="apiKey" placeholder="sk-ant-..." class="w-full px-4 py-2 bg-slate-700/50 border border-blue-400/30 rounded-lg focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500" value="${this.formData.apiKey}">
-                                            <p class="text-xs text-gray-400 mt-1">Get from <a href="https://console.anthropic.com" target="_blank" class="text-blue-400 hover:underline">console.anthropic.com</a></p>
+                                            <label class="block text-sm font-medium text-gray-300 mb-2">AgentRouter API Key *</label>
+                                            <input type="password" id="apiKey" placeholder="sk-..." class="w-full px-4 py-2 bg-slate-700/50 border border-blue-400/30 rounded-lg focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500" value="${this.formData.apiKey}">
+                                            <p class="text-xs text-gray-400 mt-1">Get from <a href="https://agentrouter.org/console/token" target="_blank" class="text-blue-400 hover:underline">agentrouter.org/console/token</a></p>
                                         </div>
 
                                         <div>
@@ -235,7 +235,7 @@
                 document.getElementById('generateBtn').textContent = '⏳ Generating...';
 
                 try {
-                    const response = await fetch("https://api.anthropic.com/v1/messages", {
+                    const response = await fetch("https://agentrouter.org/v1/messages", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
